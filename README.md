@@ -1,7 +1,9 @@
 ansible-dell-rh
 =========
 
-This role is for installing the Dell OMSA and dell-upgrade software.  IT also handles custome disk configurations if the variable dell_disk_sets is defined.  See the Storage section below for more information on this.
+This role is for installing the Dell OMSA and dell-upgrade software.  It also handles custome disk configurations if the variable dell_disk_sets is defined.  See the Storage section below for more information on this. 
+
+**THIS ROLE IS SPECIFIC TO RHEL/CentOS**
 
 
 Role Variables
@@ -68,5 +70,7 @@ If special filepermsions (owner, group, or mode) are not needing to be defined f
 Required variables for the storage section can be summarized as the following:
 
 dell_disk_sets  =  Must be defined for the storage tasks to run.  Only vgroup is optional.
+
 dell_lgvs  =  Must be defined for creation of logical volumes.  No optional values in list.
+
 dell_filesystems  =  Must be defined for filesystem creation, mounting and permissions setting.  mount_path must be defined for mounting/fstab as well as permissions setting.  owner, group and mode must be defined if permission setting is desired.
