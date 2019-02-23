@@ -1,0 +1,7 @@
+repo_command: "curl -s https://linux.dell.com/repo/hardware/dsu/bootstrap.cgi | bash"
+
+packages:
+  - dell-system-update
+  - srvadmin-base
+  - srvadmin-storageservices
+

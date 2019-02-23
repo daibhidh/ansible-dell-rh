@@ -1,0 +1,79 @@
+---
+# Storage related tasks
+- name: Get Vdisks
+  shell: /opt/dell/srvadmin/bin/omreport storage vdisk controller=0 -fmt xml
+  register: vdisks
+  changed_when: false
+  ignore_errors: true
+
+- name: Set initial disk facts
+  set_fact:
+    disks: "{{ vdisks.stdout | parse_xml(spec_file) }}"
+  vars:
+    spec_file: "{{ role_path }}/vars/storage_spec.yml"
+
+- name: Configure System defined disks
+  shell: "/opt/dell/srvadmin/bin/omconfig storage controller controller=0 action=createvdisk raid={{ dell_disk_sets[item].raid }} size=max name={{ item }} pdisk={{ dell_disk_sets[item].physical_disks }}"
+  when: (disks.disks | length == 0 ) or (disks.disks[item] is not defined )
+  loop: "{{ dell_disk_sets | list }}"
+  register: disks_created
+
+- name: Update Ansible Disk information
+  shell: /opt/dell/srvadmin/bin/omreport storage vdisk -fmt xml
+  register:  disks_xml
+  when: disks_created.changed
+
+- name: Update disks facts
+  set_fact:
+    disks: "{{ disks_xml.stdout | parse_xml(spec_file) }}"
+  when: disks_created.changed
+  vars:
+    spec_file: "{{ role_path }}/vars/storage_spec.yml"
+  
+- name: Ensure Volume groups
+  lvg:
+    vg: "{{ dell_disk_sets[item].vgroup }}"
+    pvs: "{{ disks.disks[item].disk_device }}"
+    state: present
+  when: (disks.disks[item] is defined) and (dell_disk_sets[item].vgroup is defined)
+  loop: "{{ dell_disk_sets | list }}"
+
+- name: Ensure Logical Volumes
+  lvol:
+    vg: "{{ item.vg }}"
+    thinpool: "{{ item.name }}"
+    size: "{{ item.size }}"
+    resizefs: yes
+    state: present
+  when: dell_lgvs is defined
+  loop: "{{ dell_lgvs }}"
+
+- name: Ensure Filesystems
+  filesystem:
+    fstype: "{{ dell_filesystems[item].fstype }}"
+    dev: "{{ dell_filesystems[item].device }}"
+    resizefs: yes
+  when: dell_filesystems is defined
+  loop: "{{ dell_filesystems | list }}"
+  ignore_errors: true
+  
+- name: Ensure filesystems are mounted
+  mount:
+    path: "{{ dell_filesystems[item].mount_path }}"
+    src: "{{ dell_filesystems[item].device }}"
+    fstype: "{{ dell_filesystems[item].fstype }}"
+    state: mounted
+  when: (dell_filesystems is defined) and (dell_filesystem[item].mount_path is defined)
+  loop: "{{ dell_filesystems | list }}"
+  
+- name: Ensure Filesystem Permissions
+  file:
+    path: "{{ dell_filesystems[item].mount_path }}"
+    state: directory
+    owner: "{{ dell_filesystems[item].owner }}"
+    group: "{{ dell_filesystems[item].group }}"
+    mode: "{{ dell_filesystems[item].mode }}"
+  when: (dell_filesystems is defined) and (dell_filesystems[item].owner is defined)
+  loop: "{{ dell_filesystems | list }}"
+  
+...

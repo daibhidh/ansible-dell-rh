@@ -1,0 +1,18 @@
+---
+vars:
+  disk:
+    key: "{{ item.disk_name }}"
+    values:
+      disk_name: "{{ item.disk_name }}"
+      disk_id: "{{ item.disk_id }}"
+      disk_device: "{{ item.disk_device }}"
+
+keys:
+  disks:
+    value: "{{ disk }}"
+    top: VirtualDisks/DCStorageObject
+    items:
+      disk_name: Name
+      disk_id: DeviceID
+      disk_device: DeviceName
+...

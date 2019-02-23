@@ -1,0 +1,19 @@
+---
+- name: Bootstrap system
+  shell: "{{ repo_command }}"
+  when: dell_install is defined
+
+- name: Ensure Dell packages
+  yum:
+    name: "{{ packages }}"
+    state: latest
+  
+- name: Ensure Storage services are running
+  service:
+    name: dsm_sa_datamgrd
+    state: started
+    enabled: yes
+      
+- include: storage.yml
+  when: dell_disk_sets is defined
+...
